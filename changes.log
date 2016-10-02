@@ -1,0 +1,9 @@
+Version 1:
+It works
+
+Version 1.1:
+Fixed Database duplication issue
+
+Version 1.2:
+Added support for multiple proxies
+Improved error handling
