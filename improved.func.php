@@ -1,46 +1,61 @@
 <?php
 
+function ScriptTimings($start){
+	return round((microtime(true) - $start),2);
+}
+
 function ChooseProxySite(){
 	$sites = array(
 		"https://gameofbay.org/",
 		"https://ukpirate.click/",
 		"https://unblockedbay.info/",
-		"https://tpbunblocked.org/",
+		"https://tpbunblocked.org/"
 	);
 	$total	= count($sites)-1;
 	$server = $sites[rand(0,$total)];
 	
-	echo "<div style='text-align:center;font-family:sans-serif;font-weight:100;'><span style='font-size:1.3em'>Using Server: $server</span><br /><br />";
-	return $server . "torrent/";
+	return [$server, $server . "torrent/"];
 }
 
-function TorrentId(){
+function TorrentId($server){
 	if (isset($_COOKIE["position"])) {
 		$x = $_COOKIE["position"];
 		$value = $x + 1;
 	} else {
-		$value = 8328043; //8325365 Error at 8328043
+		$value = 8333560; //8325365 Error at 8328043
 	}
-
+	
 	setcookie("position",$value,time()+31556926,"/");
+	echo "<div style='text-align:center;font-family:sans-serif;font-weight:100;'><span style='font-size:1.3em'>Using Server: $server</span><br /><br />";
+	
 	return $value;
 }
 
 function GetPageById($id, $proxy){
-	$response = array("id"=>$id, "html"=>"", "code"=> 200);
+	$response = array("id"=>$id, "html"=>false, "code"=> 200);
 	
-	$c = curl_init($proxy . $id);
-	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($c, CURLOPT_SSL_VERIFYHOST, 0);
-	curl_setopt($c, CURLOPT_SSL_VERIFYPEER, 0);
-
-	$response["html"] = curl_exec($c);
-	$response["code"] = curl_getinfo($c, CURLINFO_HTTP_CODE);
-	if (curl_error($c)) die(curl_error($c));
-	
-	curl_close($c);
-	
-	return $response;
+	try {
+		$c = curl_init($proxy . $id);
+		
+		curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($c, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_setopt($c, CURLOPT_SSL_VERIFYPEER, 0);
+		
+		$response["html"] = curl_exec($c);
+		$response["code"] = curl_getinfo($c, CURLINFO_HTTP_CODE);
+		
+		if ($c === FALSE)
+			throw new Exception('cURL couldn\'t initialise');
+		if ($response["html"] === FALSE)
+			throw new Exception(curl_error($c), curl_errno($c));
+		
+		curl_close($c);
+		
+		return $response;
+	} catch(Exception $e) {
+		trigger_error(sprintf('cURL failed with error #%d: %s', $e->getCode(), $e->getMessage()), E_USER_ERROR);
+		return false;
+	}
 }
 
 function CheckStatusCode($response){
@@ -69,12 +84,12 @@ function SkipToNextTorrent($id){
 	die('<script type="text/javascript"> window.location.reload(); </script>');
 }
 
-function GetDataFromHTML($response){
+function GetDataFromHTML($response, $start){
 	$data = array();
 	$html = str_get_html($response["html"]);
 	
 	if ($html->find("div[id=err]") || $html->find("div[class=searchfield]")) {
-		echo "TPB Error->(" . $response["id"] . ")";
+		echo "Error->(" . $response["id"] . ") in " . ScriptTimings($start) . "s";
 		SkipToNextTorrent($response["id"]);
 	}
 	
@@ -118,8 +133,8 @@ function SaveResult($save, $db, $response){
 	return true;
 }
 
-function NextTorrent($db, $response){
-	echo "Done->(" . $response["id"] . ")";
+function NextTorrent($db, $response, $start){
+	echo "Done->(" . $response["id"] . ") in " . ScriptTimings($start) . "s";
 	$db->close();
 	SkipToNextTorrent($response["id"]);
 }
