@@ -12,3 +12,7 @@ Version 1.3:
 Fixed header issue
 Added improved cURL error handling
 Added timing responses for each request
+
+Version 1.4:
+Added CLI version
+Fixed issue with simple_html_dom

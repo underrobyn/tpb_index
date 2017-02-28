@@ -1,8 +1,9 @@
 <?php
 /*
- *	TPB Indexer v1.3
+ *	TPB Indexer Web v1.4
  *	Written by Jake-Cryptic
  *	http://absolutedouble.co.uk
+ * 	"3211770"
 */
 
 // Get and verify

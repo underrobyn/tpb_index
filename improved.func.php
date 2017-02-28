@@ -22,7 +22,8 @@ function TorrentId($server){
 		$x = $_COOKIE["position"];
 		$value = $x + 1;
 	} else {
-		$value = 8333560; //8325365 Error at 8328043
+		// Earliest torrent code found = 3220833
+		$value = 8337550; //8325365 Error at 8328043 && 8337550 ?? 8333560
 	}
 	
 	setcookie("position",$value,time()+31556926,"/");
@@ -92,6 +93,10 @@ function GetDataFromHTML($response, $start){
 		echo "Error->(" . $response["id"] . ") in " . ScriptTimings($start) . "s";
 		SkipToNextTorrent($response["id"]);
 	}
+	if (!$html->find("div[id=title]", 0)) {
+		echo "Error->(" . $response["id"] . ") in " . ScriptTimings($start) . "s";
+		SkipToNextTorrent($response["id"]);
+	}
 	
 	$data["title"] 		= $html->find("div[id=title]", 0)->plaintext;
 	$data["type"] 		= $html->find("div[id=details] a", 0)->plaintext;
@@ -104,7 +109,7 @@ function GetDataFromHTML($response, $start){
 }
 
 function LoadResultStore(){
-	$db = new SQLite3("tpb_db.sqlite3");
+	$db = new SQLite3("tpb_magnet_db.sqlite3");
 	return $db;
 }
 
